@@ -13,37 +13,36 @@ def pmns_angles_from_PMNS(matrix, deg=True):
     """
     Returns the mixing angles.
     """
-    #assert is_unitary(matrix)
-
     # Convert the matrix to a rotation object
     rotation = Rotation.from_matrix(matrix)
     
-    # Try canonical rotation order
+    # Use canonical rotation order
     order = 'zyx'
     angles = rotation.as_euler(order, degrees=True)
 
-    # Correct for wrong sign of theta23 and theta12
+    # Correct for opposite sign of theta23 and theta12 compared to physics convention
+    '''
+    Code to check signs of angles
+    r_z = R.from_matrix([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
+    r_y = R.from_matrix([[0, 0, -1], [0, 1, 0], [1, 0, 0]])
+    r_x = R.from_matrix([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
+    r.as_euler('xyz', degrees=True)
+    '''
     angles[0] = -angles[0]
     angles[2] = -angles[2]
         
-    # Extract the angles of rotation around x, y, and z axes
+    # Extract the angles of rotation around z, y, and x axes
     theta12, theta13, theta23 = angles 
-
-    # Check whether angles lie in first quadrant
-    #if np.all(angles >= 0) and np.all(angles <= 90):
-    #    pass
-    #else:
-    #    raise Exception("Angles are not in the first quadrant. The PMNS matrix might have been calculated using a wrong order. The calculated angels are ", angles)
 
     # Return mixing angles
     if deg:
         return theta12, theta13, theta23
     else:
         return np.deg2rad(theta12), np.deg2rad(theta13), np.deg2rad(theta23)
-
+    
 
 def is_diagonal(matrix, threshold= 1e-10):
-    # Check if the matrix is diagonal within a specified threshold
+    """ Check if the matrix is diagonal within a specified threshold """
     return np.all(np.abs(matrix - np.diag(np.diagonal(matrix))) < threshold)
 
 
@@ -61,7 +60,7 @@ def get_pmns_matrix(theta, dcp=0.) :
         
         # Using definition from https://en.wikipedia.org/wiki/Neutrino_oscillation
         pmns = np.array( [
-            [   np.cos(theta[0])*np.cos(theta[1]),                                                                        np.sin(theta[0])*np.cos(theta[1]),                                                                        np.sin(theta[1])*np.exp(-1.j*dcp)  ], 
+            [   np.cos(theta[0])*np.cos(theta[1]),                                                                        np.sin(theta[0])*np.cos(theta[1]),                                                                        np.sin(theta[1])*np.exp(1.j*dcp)  ], #Janni
             [  -np.sin(theta[0])*np.cos(theta[2]) -np.cos(theta[0])*np.sin(theta[2])*np.sin(theta[1])*np.exp(1.j*dcp),    np.cos(theta[0])*np.cos(theta[2]) -np.sin(theta[0])*np.sin(theta[2])*np.sin(theta[1])*np.exp(1.j*dcp),    np.sin(theta[2])*np.cos(theta[1])  ], 
             [  np.sin(theta[0])*np.sin(theta[2]) -np.cos(theta[0])*np.cos(theta[2])*np.sin(theta[1])*np.exp(1.j*dcp),    -np.cos(theta[0])*np.sin(theta[2]) -np.sin(theta[0])*np.cos(theta[2])*np.sin(theta[1])*np.exp(1.j*dcp),    np.cos(theta[2])*np.cos(theta[1])  ],
         ], dtype=np.complex128 )
@@ -72,13 +71,20 @@ def get_pmns_matrix(theta, dcp=0.) :
 
 
 if __name__ == "__main__" :
-    # Example usage:
-
+    
+    #
+    # Example usage
+    #
     orthogonal_matrix = np.array([[1, 0, 0],
                             [0, 1, 0],
                             [0, 0, 1]])
 
-    print(is_unitary(orthogonal_matrix))
+    print("Is matrix unitary?", is_unitary(orthogonal_matrix))
+    print("Is matrix diagonal?", is_diagonal(orthogonal_matrix))
+
+    #
+    # Check whether get_pmns_matrix method works
+    #
 
     for i in np.random.uniform(0, np.pi/2, 1):
         j = np.random.uniform(0, np.pi/2)
